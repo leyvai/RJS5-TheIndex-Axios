@@ -1,6 +1,5 @@
 import React, { Component } from "react";
-
-import authors from "./data.js";
+import axios from "axios";
 
 // Components
 import Sidebar from "./Sidebar";
@@ -10,16 +9,38 @@ import AuthorDetail from "./AuthorDetail";
 class App extends Component {
   state = {
     currentAuthor: null,
-    filteredAuthors: authors
+    filteredAuthors: [],
+    authors: [],
+    loading: true
   };
 
-  selectAuthor = author => this.setState({ currentAuthor: author });
+  loading = "The page is currently loading, please wait";
+
+  async componentDidMount() {
+    try {
+      let response = await axios.get(
+        "https://the-index-api.herokuapp.com/api/authors"
+      );
+      this.setState({ authors: response.data, loading: false });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  selectAuthor = async author => {
+    let res = await axios.get(
+      `https://the-index-api.herokuapp.com/api/authors/${author.id}/`
+    );
+    console.log(res);
+    const currAuthor = res.data;
+    this.setState({ currentAuthor: currAuthor });
+  };
 
   unselectAuthor = () => this.setState({ currentAuthor: null });
 
   filterAuthors = query => {
     query = query.toLowerCase();
-    let filteredAuthors = authors.filter(author => {
+    let filteredAuthors = this.state.authors.filter(author => {
       return `${author.first_name} ${author.last_name}`
         .toLowerCase()
         .includes(query);
@@ -33,7 +54,8 @@ class App extends Component {
     } else {
       return (
         <AuthorsList
-          authors={this.state.filteredAuthors}
+          authors={this.state.authors}
+          /*  {authors={this.state.filteredAuthors} }*/
           selectAuthor={this.selectAuthor}
           filterAuthors={this.filterAuthors}
         />
